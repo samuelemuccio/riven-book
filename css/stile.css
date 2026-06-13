@@ -31,6 +31,7 @@ html[data-tema="normale"]{
   --ombra:0 1px 2px rgba(43,33,24,.08), 0 12px 40px -18px rgba(43,33,24,.25);
   --c-kainar:#5f7d4c;   --c-lexora:#9a6a2c;   --c-bowkarot:#4f6378;
   --c-leda:#a0563a;     --c-torkas:#766343;
+  --pelle:#2c1a10; --pelle-luce:#5c3c25; --pelle-scura:#1a0f08; --oro:#c8a24a; --oro-tenue:#9a7a36;
 }
 
 /* Forma celestiale — pietra notturna, osso, sigilli accesi */
@@ -51,6 +52,7 @@ html[data-tema="celestiale"]{
   --ombra:0 1px 2px rgba(0,0,0,.5), 0 14px 50px -16px rgba(120,90,200,.18);
   --c-kainar:#93b87e;   --c-lexora:#cda062;   --c-bowkarot:#8ba2bb;
   --c-leda:#cf8862;     --c-torkas:#ab9778;
+  --pelle:#171022; --pelle-luce:#3a2c52; --pelle-scura:#0c0812; --oro:#b79be0; --oro-tenue:#8166b0;
 }
 
 *{box-sizing:border-box}
@@ -535,33 +537,54 @@ html[data-tema="celestiale"] .sigillo{ animation:respiro 5s ease-in-out infinite
   display:grid; place-items:center;
 }
 .faccia.fronte{
-  background:linear-gradient(120deg, rgba(0,0,0,.20), transparent 22%), var(--carta-fonda);
-  border:1px solid var(--linea-forte);
-  outline:1px solid var(--linea); outline-offset:-11px;
-  box-shadow:var(--ombra), inset 0 0 70px rgba(0,0,0,.08);
+  background:
+    radial-gradient(130% 100% at 16% 8%, rgba(255,236,200,.10), transparent 46%),
+    linear-gradient(135deg, transparent 38%, rgba(0,0,0,.34)),
+    linear-gradient(90deg, rgba(0,0,0,.5), transparent 13%),
+    var(--pelle);
+  border:1px solid var(--pelle-scura);
+  box-shadow:inset 0 0 0 1px rgba(255,220,170,.05),
+             inset 0 0 60px rgba(0,0,0,.5),
+             inset 0 2px 1px rgba(255,230,190,.07);
   text-align:center; padding:2rem 1.6rem;
+  border-radius:2px 6px 6px 2px;
+}
+/* cornice incisa sulla pelle */
+.faccia.fronte::after{
+  content:""; position:absolute; inset:18px 14px;
+  border:1px solid var(--oro-tenue); opacity:.4; border-radius:2px;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);
+  pointer-events:none;
 }
 .faccia.fronte::before{
-  content:""; position:absolute; top:0; bottom:0; left:0; width:10px;
-  background:linear-gradient(90deg, rgba(0,0,0,.30), rgba(0,0,0,.03));
+  content:""; position:absolute; top:0; bottom:0; left:0; width:14px;
+  background:linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.04));
 }
+.faccia.fronte .sigillo .tratto{ stroke:var(--oro) }
+.faccia.fronte .sigillo .pupilla{ fill:var(--oro) }
+.faccia.fronte .sigillo{ filter:drop-shadow(0 1px 0 rgba(0,0,0,.6)) drop-shadow(0 0 10px rgba(200,162,74,.25)) }
 .faccia.retro{
   transform:rotateY(180deg);
-  background:var(--carta-fonda);
-  border:1px solid var(--linea-forte);
-  outline:1px solid var(--linea); outline-offset:-11px;
+  background:radial-gradient(120% 100% at 80% 12%, rgba(255,236,200,.06), transparent 50%), var(--pelle);
+  border:1px solid var(--pelle-scura);
+  box-shadow:inset 0 0 60px rgba(0,0,0,.5);
 }
 .sigillo-retro{ width:44% }
 .sigillo-retro path{ stroke:var(--inchiostro); opacity:.2 }
 .sigillo-retro ellipse{ fill:var(--viola); opacity:.3 }
 
-.faccia.fronte .titolone{ font-size:clamp(2.8rem,11vw,5rem); letter-spacing:.24em; text-indent:.24em }
-.faccia.fronte .sovratitolo{ margin-bottom:1.4rem; font-size:.78rem }
-.faccia.fronte .sottotitolo{ font-size:1.02rem; margin-top:1.2rem }
+.faccia.fronte .titolone{
+  font-size:clamp(2.8rem,11vw,5rem); letter-spacing:.24em; text-indent:.24em;
+  color:var(--oro);
+  text-shadow:0 1px 0 rgba(0,0,0,.7), 0 -1px 0 rgba(255,230,180,.18), 0 0 22px rgba(200,162,74,.22);
+}
+html[data-tema="celestiale"] .faccia.fronte .titolone{ text-shadow:0 1px 0 rgba(0,0,0,.8), 0 0 26px var(--bagliore) }
+.faccia.fronte .sovratitolo{ margin-bottom:1.4rem; font-size:.78rem; color:var(--oro-tenue) }
+.faccia.fronte .sottotitolo{ font-size:1.02rem; margin-top:1.2rem; color:color-mix(in srgb, var(--oro) 60%, #d8c7a0) }
 .faccia.fronte .invito{
   display:inline-block; margin-top:2.2rem;
   font-variant:small-caps; letter-spacing:.4em; text-indent:.4em; font-size:.82rem;
-  color:var(--rubrica); border:1px solid var(--linea-forte); border-radius:2em;
+  color:var(--oro); border:1px solid var(--oro-tenue); border-radius:2em;
   padding:.45em 1.4em .5em; animation:respiro 3.2s ease-in-out infinite;
 }
 
@@ -734,56 +757,86 @@ html[data-tema="celestiale"] .inchiostro .goccia{ opacity:.5; filter:drop-shadow
 
 
 
-/* Struttura 3D del Libro (Spessore) */
+/* Struttura 3D del Libro (Spessore) — taglio dorato delle pagine */
 .bordo-superiore, .bordo-destro, .bordo-inferiore {
   position: absolute;
-  /* La texture della carta deve funzionare bene anche nel tema celestiale. Uso variabili CSS. */
-  background: repeating-linear-gradient(to right, var(--carta) 0px, var(--carta-fonda) 1px, var(--carta-nota) 2px, var(--linea) 3px);
-  border: 1px solid var(--linea-forte);
+  background:
+    repeating-linear-gradient(to right, rgba(0,0,0,.10) 0 1px, transparent 1px 3px),
+    linear-gradient(to right, #d8c8a0, #efe3c4 50%, #cdbb90);
+  border: 1px solid var(--oro-tenue);
 }
 .bordo-superiore {
   top: 0; left: 0; right: 0; height: var(--spessore);
   transform-origin: top; transform: rotateX(-90deg);
-  background: repeating-linear-gradient(to bottom, var(--carta) 0px, var(--carta-fonda) 1px, var(--carta-nota) 2px, var(--linea) 3px);
+  background:
+    repeating-linear-gradient(to right, rgba(0,0,0,.08) 0 1px, transparent 1px 4px),
+    linear-gradient(to bottom, #efe3c4, #cdbb90);
 }
 .bordo-inferiore {
   bottom: 0; left: 0; right: 0; height: var(--spessore);
   transform-origin: bottom; transform: rotateX(90deg);
-  background: repeating-linear-gradient(to top, var(--carta) 0px, var(--carta-fonda) 1px, var(--carta-nota) 2px, var(--linea) 3px);
+  background:
+    repeating-linear-gradient(to right, rgba(0,0,0,.08) 0 1px, transparent 1px 4px),
+    linear-gradient(to top, #cdbb90, #d8c8a0);
 }
 .bordo-destro {
   top: 0; bottom: 0; right: 0; width: var(--spessore);
   transform-origin: right; transform: rotateY(-90deg);
 }
 
+/* il dorso: cuoio con nervature in rilievo */
 .dorso {
   position: absolute; top: 0; bottom: 0; left: 0; width: var(--spessore);
-  background: var(--carta-fonda); border: 1px solid var(--linea-forte);
   transform-origin: left; transform: rotateY(90deg);
-  box-shadow: inset 0 0 20px rgba(0,0,0,.15);
+  background:
+    repeating-linear-gradient(to bottom,
+      transparent 0 60px,
+      rgba(0,0,0,.45) 60px 64px,
+      rgba(255,225,180,.10) 64px 66px,
+      transparent 66px 72px),
+    linear-gradient(90deg, rgba(255,225,180,.10), rgba(0,0,0,.4) 70%),
+    var(--pelle);
+  border: 1px solid var(--pelle-scura);
+  box-shadow: inset 0 0 24px rgba(0,0,0,.6);
 }
 
 .copertina-retro {
   position: absolute; inset: 0;
   transform: translateZ(calc(var(--spessore) * -1)) rotateY(180deg);
-  background: linear-gradient(120deg, rgba(0,0,0,.20), transparent 22%), var(--carta-fonda);
-  border: 1px solid var(--linea-forte);
-  outline: 1px solid var(--linea); outline-offset: -11px;
-  box-shadow: inset 0 0 70px rgba(0,0,0,.08);
+  background:
+    radial-gradient(120% 100% at 80% 10%, rgba(255,236,200,.06), transparent 50%),
+    linear-gradient(135deg, transparent 40%, rgba(0,0,0,.35)),
+    var(--pelle);
+  border: 1px solid var(--pelle-scura);
+  box-shadow: inset 0 0 60px rgba(0,0,0,.5);
   display: flex; flex-direction: column; justify-content: center; align-items: center;
   padding: 3rem 2rem; text-align: center;
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
 }
+.copertina-retro::after{
+  content:""; position:absolute; inset:18px 14px;
+  border:1px solid var(--oro-tenue); opacity:.35; pointer-events:none;
+}
 
 .copertina-retro .sinossi {
   font-family: var(--font-altramano); font-style: italic;
-  font-size: 1.12rem; color: var(--inchiostro-tenue);
+  font-size: 1.12rem; color: color-mix(in srgb, var(--oro) 50%, #ccbb98);
   margin-top: 1.8rem; line-height: 1.6; max-width: 22rem;
 }
 
-.copertina-retro .sigillo-retro { width: 35%; max-width: 70px; opacity: 0.6; }
-.copertina-retro .sigillo-retro path { stroke: var(--inchiostro); }
-.copertina-retro .sigillo-retro ellipse { fill: var(--viola); }
+.copertina-retro .sigillo-retro { width: 35%; max-width: 70px; opacity: 0.7; }
+.copertina-retro .sigillo-retro path { stroke: var(--oro); }
+.copertina-retro .sigillo-retro ellipse { fill: var(--oro); }
+
+/* l'ombra che appoggia il libro al buio (non ruota col libro) */
+.scena-libro{ position:relative }
+.scena-libro::after{
+  content:""; position:absolute; z-index:-1;
+  left:50%; bottom:-6%; width:64%; height:42px;
+  transform:translateX(-50%);
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.55), transparent 70%);
+  filter:blur(16px); pointer-events:none;
+}
 
 
 
@@ -805,3 +858,70 @@ html[data-tema="celestiale"] .inchiostro .goccia{ opacity:.5; filter:drop-shadow
   background: var(--rubrica); color: var(--carta); box-shadow: 0 0 16px var(--bagliore);
   transform: scale(1.05);
 }
+
+/* ============================================================
+   SEGNALIBRO-PUGNALE — si pianta nel punto esatto della lettura
+   ============================================================ */
+.testo p.segnato{ position:relative }
+.pugnale{
+  position:absolute; top:-1.55em; left:-1.2rem;
+  width:12rem; height:auto; z-index:14;
+  cursor:pointer; transform-origin:18px 50%;
+  filter:drop-shadow(0 4px 5px rgba(0,0,0,.45));
+}
+.pugnale svg{ width:100%; height:auto; display:block; overflow:visible }
+.pugnale .lama{ fill:url(#acciaioLama) }
+.pugnale .solco{ stroke:rgba(0,0,0,.35); stroke-width:1; fill:none }
+.pugnale .filo{ stroke:var(--viola); stroke-width:1.1; fill:none; opacity:.85;
+  filter:drop-shadow(0 0 3px var(--viola)) }
+.pugnale .guardia{ fill:#aeb7c6; stroke:#5a6373; stroke-width:.6 }
+.pugnale .impugnatura{ fill:#3a281a; stroke:#1f140b; stroke-width:.6 }
+.pugnale .ferro{ fill:#9aa3b2; stroke:#5a6373; stroke-width:.6 }
+.pugnale .pomo-occhio{ fill:var(--viola); filter:drop-shadow(0 0 4px var(--viola)) }
+.pugnale .glint{ fill:#fff; opacity:0 }
+.pugnale.entra .glint{ animation:pugnale-glint 1s ease .35s 1 }
+.pugnale.entra{ animation:pugnale-pianta .85s cubic-bezier(.2,1.25,.35,1) both }
+.pugnale.esci{ animation:pugnale-via .5s cubic-bezier(.5,0,.8,.2) both }
+.pugnale:hover{ filter:drop-shadow(0 4px 7px rgba(0,0,0,.5)) drop-shadow(0 0 8px var(--bagliore)) }
+.pugnale::after{   /* tacca/taglio sulla pagina, sotto la punta */
+  content:""; position:absolute; right:.2rem; top:calc(50% + .55em); width:34%; height:1px;
+  background:linear-gradient(90deg, transparent, var(--viola-tenue), transparent); opacity:.5;
+}
+@keyframes pugnale-pianta{
+  0%{ transform:translateX(-70px) rotate(-16deg); opacity:0 }
+  55%{ transform:translateX(6px) rotate(-1deg); opacity:1 }
+  70%{ transform:translateX(0) rotate(-6deg) }
+  84%{ transform:rotate(-3.5deg) }
+  100%{ transform:translateX(0) rotate(-5deg); opacity:1 }
+}
+.pugnale{ transform:translateX(0) rotate(-5deg) }   /* stato a riposo: leggermente piantato */
+@keyframes pugnale-via{ to{ transform:translateX(-70px) rotate(-18deg); opacity:0 } }
+@keyframes pugnale-glint{ 0%{opacity:0; transform:translateX(-30px)} 40%{opacity:.85} 100%{opacity:0; transform:translateX(60px)} }
+@media (max-width:760px){
+  .pugnale{ width:8.5rem; left:-.5rem; top:-1.4em }
+}
+@media (prefers-reduced-motion:reduce){
+  .pugnale.entra, .pugnale.esci{ animation:none }
+  .pugnale{ transform:rotate(-4deg) }
+}
+
+/* il bottone che pianta il segnalibro (solo nei capitoli) */
+.pianta-pugnale{
+  position:fixed; right:1.1rem; bottom:1.1rem; z-index:55;
+  display:flex; align-items:center; gap:.5rem;
+  background:color-mix(in srgb, var(--carta) 90%, transparent);
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  border:1px solid var(--linea-forte); border-radius:2em;
+  padding:.5rem .9rem .5rem .7rem; cursor:pointer;
+  color:var(--inchiostro-tenue); font-family:var(--font-corpo);
+  font-variant:small-caps; letter-spacing:.14em; font-size:.82rem;
+  box-shadow:var(--ombra); transition:color .2s, border-color .2s, box-shadow .2s;
+}
+.pianta-pugnale:hover{ color:var(--viola); border-color:var(--viola); box-shadow:var(--ombra), 0 0 14px var(--bagliore) }
+.pianta-pugnale .icona{ width:1.5rem; height:auto; flex:none }
+.pianta-pugnale .icona .lama{ fill:#aeb7c6 }
+.pianta-pugnale .icona .filo{ stroke:var(--viola); stroke-width:1.2; fill:none }
+.pianta-pugnale .icona .impugnatura{ fill:#3a281a }
+.pianta-pugnale .icona .ferro{ fill:#9aa3b2 }
+.pianta-pugnale.attivo{ color:var(--viola); border-color:var(--viola) }
+@media print{ .pianta-pugnale, .pugnale{ display:none !important } }

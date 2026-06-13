@@ -73,20 +73,25 @@
   var chip = document.querySelector('.segnalibro');
   if (chip) {
     try {
-      var sb2 = JSON.parse(localStorage.getItem('riven-segnalibro') || 'null');
+      // il pugnale piantato ha la precedenza sul "riprendi" automatico
+      var pug = JSON.parse(localStorage.getItem('riven-pugnale') || 'null');
+      var sb2 = pug || JSON.parse(localStorage.getItem('riven-segnalibro') || 'null');
       if (sb2 && sb2.file) {
         var a = chip.querySelector('a.link-leggi');
         if (a) {
           a.href = 'capitoli/' + sb2.file + '#segnalibro';
-          a.textContent = 'Capitolo ' + sb2.cap + ' — ' + sb2.titolo;
+          a.textContent = (pug ? '🗡 ' : '') + 'Capitolo ' + sb2.cap + ' — ' + sb2.titolo;
           chip.classList.add('visibile');
         }
+        var dove = chip.querySelector('.dove-eri');
+        if (dove && pug) dove.textContent = 'il segnalibro è piantato qui';
         var btnChiudi = chip.querySelector('button.chiudi-segnalibro');
         if (btnChiudi) {
           btnChiudi.addEventListener('click', function(e){
             e.preventDefault(); e.stopPropagation();
             chip.classList.remove('visibile');
             localStorage.removeItem('riven-segnalibro');
+            localStorage.removeItem('riven-pugnale');
           });
         }
       }
@@ -326,4 +331,103 @@
       img.src = base + '.' + estensioni[i];
     })(0);
   });
+
+  /* ---------- IL SEGNALIBRO-PUGNALE — si pianta nel punto della lettura ---------- */
+  if (corpo.classList.contains('capitolo')) {
+    var SVG_PUGNALE =
+      '<svg viewBox="0 0 150 34" aria-hidden="true">' +
+        '<defs><linearGradient id="acciaioLama" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0" stop-color="#eef2f7"/><stop offset=".5" stop-color="#aab2c0"/><stop offset="1" stop-color="#6f7886"/>' +
+        '</linearGradient></defs>' +
+        '<rect class="impugnatura" x="20" y="13" width="26" height="8" rx="3"/>' +
+        '<circle class="ferro" cx="14" cy="17" r="7"/>' +
+        '<circle class="pomo-occhio" cx="14" cy="17" r="2.3"/>' +
+        '<path class="guardia" d="M44 5 L50 5 L50 29 L44 29 Z"/>' +
+        '<path class="lama" d="M50 12 L146 17 L50 22 Z"/>' +
+        '<path class="solco" d="M57 17 L128 17"/>' +
+        '<path class="filo" d="M50 12 L146 17"/>' +
+        '<rect class="glint" x="54" y="13" width="11" height="8" rx="2"/>' +
+      '</svg>';
+
+    var paragrafi = Array.prototype.slice.call(document.querySelectorAll('.testo p'));
+    var btn = null;
+
+    function salvato(){ try { return JSON.parse(localStorage.getItem('riven-pugnale') || 'null'); } catch(e){ return null; } }
+
+    function idxInCima(){
+      for (var i = 0; i < paragrafi.length; i++){
+        if (paragrafi[i].getBoundingClientRect().bottom > 150) return i;
+      }
+      return Math.max(0, paragrafi.length - 1);
+    }
+
+    function togliPugnale(animato){
+      var vecchio = document.querySelector('.pugnale');
+      if (!vecchio) return;
+      var p = vecchio.parentElement;
+      function via(){ if (vecchio.parentElement) vecchio.parentElement.removeChild(vecchio); if (p) p.classList.remove('segnato'); }
+      if (animato && animOk){ vecchio.classList.add('esci'); setTimeout(via, 480); }
+      else via();
+    }
+
+    function pianta(idx, animato){
+      if (idx < 0 || idx >= paragrafi.length) return;
+      togliPugnale(false);
+      var p = paragrafi[idx];
+      p.classList.add('segnato');
+      var el = document.createElement('span');
+      el.className = 'pugnale' + (animato && animOk ? ' entra' : '');
+      el.title = 'Togli il segnalibro';
+      el.setAttribute('role', 'button');
+      el.innerHTML = SVG_PUGNALE;
+      el.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        togliPugnale(true);
+        try { localStorage.removeItem('riven-pugnale'); } catch(e2){}
+        aggiornaBtn();
+      });
+      p.insertBefore(el, p.firstChild);
+      try {
+        localStorage.setItem('riven-pugnale', JSON.stringify({
+          file: fileCorrente, cap: capCorrente, titolo: titoloCorrente, idx: idx
+        }));
+      } catch(e){}
+      aggiornaBtn();
+    }
+
+    function aggiornaBtn(){
+      if (!btn) return;
+      var c = !!document.querySelector('.pugnale');
+      btn.classList.toggle('attivo', c);
+      btn.querySelector('.etichetta-btn').textContent = c ? 'togli il segnalibro' : 'pianta il segnalibro';
+    }
+
+    // bottone fisso (funziona su desktop e touch)
+    btn = document.createElement('button');
+    btn.className = 'pianta-pugnale';
+    btn.type = 'button';
+    btn.innerHTML = '<span class="icona">' + SVG_PUGNALE + '</span><span class="etichetta-btn">pianta il segnalibro</span>';
+    btn.addEventListener('click', function(){
+      if (document.querySelector('.pugnale')) {
+        togliPugnale(true);
+        try { localStorage.removeItem('riven-pugnale'); } catch(e){}
+        aggiornaBtn();
+      } else {
+        pianta(idxInCima(), true);
+      }
+    });
+    document.body.appendChild(btn);
+
+    // ripristino: se il pugnale è in questo capitolo, rimettilo dov'era
+    var pg = salvato();
+    if (pg && pg.file === fileCorrente && typeof pg.idx === 'number') {
+      var arrivo = (location.hash === '#segnalibro');
+      pianta(pg.idx, arrivo);              // se arrivi dal segnalibro, si ri-pianta con l'animazione
+      if (arrivo) {
+        var seg = document.querySelector('.testo p.segnato');
+        if (seg) setTimeout(function(){ seg.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 80);
+      }
+    }
+    aggiornaBtn();
+  }
 })();
