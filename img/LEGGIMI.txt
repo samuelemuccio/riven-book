@@ -1,0 +1,19 @@
+TAVOLE — come inserire le illustrazioni
+=======================================
+Metti le immagini qui con questi nomi esatti:
+
+  1.jpg   ->  Cap. I: Il cesto sul fiume, all'alba
+  2.jpg   ->  Cap. II: La grande sala dei libri
+  3.jpg   ->  Cap. III: La sera delle ali
+  4.jpg   ->  Cap. IV: Il bordo reciso, a lume di candela
+  5.jpg   ->  Cap. V: I lupi dell'altopiano
+  6.jpg   ->  Cap. VI: Le ali di carbone sulla parete
+  7.jpg   ->  Cap. VII: La scaglia
+  8.jpg   ->  Cap. VIII: Il costone sopra il fiume
+  9.jpg   ->  Cap. IX: Il guado, di notte
+  10.jpg   ->  Cap. X: Il mercato del crocevia
+  11.jpg   ->  Cap. XI: Castelfosso, di notte
+  12.jpg   ->  Cap. XII: Gli spuntoni, e l'altopiano oltre
+
+Formati: .jpg .jpeg .png .webp. Consigliato orizzontale 16:10, >=1600px.
+Se manca, resta il segnaposto: niente si rompe.
