@@ -232,8 +232,12 @@
       onda = onda * onda;                 // più ripida: l'abisso dura meno
       marea.style.opacity = (onda * 0.96).toFixed(3);
       // il testo del panico si fa opaco e trema appena nel fondo dell'abisso
+      // >>> FORZA DELLO SFOCATO (Cap. XI): alza/abbassa il moltiplicatore qui sotto.
+      //     1.3 = sfocatura attuale al culmine. Es. 2.0 = più cieco, 0.7 = più lieve.
+      //     (onda va 0->1->0 con lo scroll; blur in px). Salva e ricostruisci, o
+      //     fai un hard-refresh, per superare la cache ?v=.
       var blur = (onda * 1.3).toFixed(2);
-      var fade = (1 - onda * 0.35).toFixed(3);
+      var fade = (1 - onda * 0.55).toFixed(3);   // 0.35 = quanto sbiadisce il testo (più alto = più scuro)
       for (var i = 0; i < blocchi.length; i++){
         blocchi[i].style.filter = 'blur(' + blur + 'px)';
         blocchi[i].style.opacity = fade;
@@ -246,15 +250,6 @@
 
   /* ---------- EFFETTI IMMERSIVI per-capitolo ---------- */
   var animOk = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-
-  // Cap. III — il sigillo si incide a fuoco quando la scena entra in vista
-  var sigScena = document.querySelector('.sigillo-scena');
-  if (sigScena && 'IntersectionObserver' in window) {
-    var os = new IntersectionObserver(function(v){
-      v.forEach(function(e){ if (e.isIntersecting){ sigScena.classList.add('acceso'); os.disconnect(); } });
-    }, { threshold: 0.55 });
-    os.observe(sigScena);
-  }
 
   // Cap. V — lo sciame di occhi: appare con la scena dei lupi, le pupille seguono il cursore
   var lupi = document.querySelector('.lupi');
@@ -313,6 +308,133 @@
     ot.observe(strappo);
   } else if (strappo) { strappo.classList.add('aperto'); }
 
+  // "Decifra" (riutilizzabile, marcatore %%…%% nei .md) — la mano morta resta
+  // illeggibile: glifi di altre lingue che si rimescolano piano. SOLO quando ci
+  // passi sopra (o la tocchi/metti a fuoco) si ricompone in parole; appena la
+  // lasci, torna a mescolarsi. È il lettore a decifrarla. Vedi cap. IV.
+  var daDecifrare = document.querySelectorAll('.decifra');
+  if (daDecifrare.length) {
+    // glifi di "altre lingue": greco, cirillico, latino antico, simboli.
+    var GLIFI = 'ΩΨΦΞΛΣΔΘΠæøþðƒ§‡†∂∆◊¥ßЖфДѮѫ';
+    function unGlifo(){ return GLIFI.charAt((Math.random() * GLIFI.length) | 0); }
+    daDecifrare.forEach(function(el){
+      var finale = el.textContent;
+      el.setAttribute('aria-label', finale);   // lo screen reader legge il testo vero
+      if (!animOk){ el.classList.add('risolto'); return; }   // niente moto: resta leggibile
+
+      // VELOCITÀ: DUR = ms per ricomporsi/rimescolarsi del tutto (più alto = più lento).
+      //           RESPIRO = ogni quanti ms cambiano i glifi quando è illeggibile.
+      var DUR = 2400, RESPIRO = 400;
+      var prog = 0, attivo = false, visibile = false, raf = null;
+      var ultimo = 0, ultimoResp = 0, cache = '', ultimaStr = null;
+      function rigeneraGlifi(){
+        var s = '';
+        for (var i = 0; i < finale.length; i++){ var c = finale.charAt(i); s += (c === ' ' || c === '\n') ? c : unGlifo(); }
+        cache = s;
+      }
+      rigeneraGlifi();
+      function frame(ts){
+        if (!ultimo) ultimo = ts;
+        var dt = ts - ultimo; ultimo = ts;
+        prog += (attivo ? 1 : -1) * (dt / DUR);
+        if (prog < 0) prog = 0; if (prog > 1) prog = 1;
+        if (ts - ultimoResp > RESPIRO){ rigeneraGlifi(); ultimoResp = ts; }
+        var taglio = Math.round(prog * finale.length);   // lettere vere mostrate da sinistra
+        var s = '';
+        for (var i = 0; i < finale.length; i++){
+          var c = finale.charAt(i);
+          s += (c === ' ' || c === '\n' || i < taglio) ? c : cache.charAt(i);
+        }
+        if (s !== ultimaStr){ el.textContent = s; ultimaStr = s; }
+        el.classList.toggle('risolto', prog >= 1);
+        if (visibile) raf = requestAnimationFrame(frame); else raf = null;
+      }
+      function avvia(){ if (!raf){ ultimo = 0; raf = requestAnimationFrame(frame); } }
+      var trigger = el.closest('.enigma-box') || el;
+      trigger.addEventListener('mouseenter', function(){ attivo = true; });
+      trigger.addEventListener('mouseleave', function(){ attivo = false; });
+      trigger.addEventListener('focus', function(){ attivo = true; });
+      trigger.addEventListener('blur', function(){ attivo = false; });
+      trigger.addEventListener('click', function(){ attivo = !attivo; });   // tocco (mobile)
+      if ('IntersectionObserver' in window){
+        var io = new IntersectionObserver(function(v){
+          v.forEach(function(e){ visibile = e.isIntersecting; if (visibile) avvia(); });
+        }, { threshold: 0 });
+        io.observe(el);
+      } else { visibile = true; avvia(); }
+    });
+  }
+
+  /* ---------- NOTE A MARGINE — marcatore [[testo||nota]], pannello a destra ---------- */
+  var note = document.querySelectorAll('.nota');
+  if (note.length){
+    var pop = document.createElement('aside');
+    pop.className = 'nota-pop'; pop.setAttribute('role', 'note'); pop.hidden = true;
+    pop.innerHTML = '<span class="nota-pop-num"></span><div class="nota-pop-testo"></div>';
+    document.body.appendChild(pop);
+    var popNum = pop.querySelector('.nota-pop-num');
+    var popTxt = pop.querySelector('.nota-pop-testo');
+    var attiva = null, viaTimer = null, nascondiTimer = null;
+
+    function posiziona(n){
+      var r = n.getBoundingClientRect();
+      var ph = pop.offsetHeight;
+      var pw = pop.offsetWidth;
+      var top = r.top - ph - 12;
+      var bottomPointer = true;
+      if (top < 10) {
+        top = r.bottom + 12;
+        bottomPointer = false;
+      }
+      var left = r.left + r.width / 2 - pw / 2;
+      left = Math.max(10, Math.min(left, window.innerWidth - pw - 10));
+      pop.style.top = top + 'px';
+      pop.style.left = left + 'px';
+      pop.style.right = 'auto';
+      if (bottomPointer) {
+        pop.classList.remove('sotto');
+        pop.classList.add('sopra');
+      } else {
+        pop.classList.remove('sopra');
+        pop.classList.add('sotto');
+      }
+    }
+    function mostra(n){
+      clearTimeout(viaTimer); clearTimeout(nascondiTimer);
+      if (attiva && attiva !== n) attiva.classList.remove('nota-attiva');
+      attiva = n;
+      popNum.textContent = n.querySelector('.nota-seg').textContent;
+      popTxt.innerHTML = n.querySelector('.nota-corpo').innerHTML;
+      pop.hidden = false; pop.style.visibility = 'hidden';
+      requestAnimationFrame(function(){
+        posiziona(n); pop.style.visibility = '';
+        pop.classList.add('aperta'); n.classList.add('nota-attiva');
+      });
+    }
+    function nascondi(){
+      viaTimer = setTimeout(function(){
+        pop.classList.remove('aperta');
+        if (attiva){ attiva.classList.remove('nota-attiva'); attiva = null; }
+        nascondiTimer = setTimeout(function(){ if (!pop.classList.contains('aperta')) pop.hidden = true; }, 240);
+      }, 90);
+    }
+    note.forEach(function(n, i){
+      n.querySelector('.nota-seg').textContent = (i + 1);
+      n.addEventListener('mouseenter', function(){ mostra(n); });
+      n.addEventListener('mouseleave', nascondi);
+      n.addEventListener('focus', function(){ mostra(n); });
+      n.addEventListener('blur', nascondi);
+      n.addEventListener('click', function(e){ e.preventDefault(); if (attiva === n) nascondi(); else mostra(n); });
+    });
+    pop.addEventListener('mouseenter', function(){ clearTimeout(viaTimer); clearTimeout(nascondiTimer); });
+    pop.addEventListener('mouseleave', nascondi);
+    document.addEventListener('click', function(e){
+      if (attiva && !attiva.contains(e.target) && !pop.contains(e.target)) nascondi();
+    });
+    window.addEventListener('scroll', function(){ if (attiva && !pop.hidden) posiziona(attiva); }, {passive:true});
+    window.addEventListener('resize', function(){ if (attiva && !pop.hidden) posiziona(attiva); }, {passive:true});
+  }
+
   /* ---------- LE TAVOLE — se l'immagine esiste, prende il posto ---------- */
   document.querySelectorAll('.tavola[data-base]').forEach(function(tav){
     var base = tav.getAttribute('data-base');
@@ -354,11 +476,17 @@
 
     function salvato(){ try { return JSON.parse(localStorage.getItem('riven-pugnale') || 'null'); } catch(e){ return null; } }
 
-    function idxInCima(){
+    // il paragrafo che attraversa il CENTRO dello schermo (sempre visibile, mai sopra la vista)
+    function idxCentro(){
+      var c = window.innerHeight / 2, best = -1, bestDist = Infinity;
       for (var i = 0; i < paragrafi.length; i++){
-        if (paragrafi[i].getBoundingClientRect().bottom > 150) return i;
+        var r = paragrafi[i].getBoundingClientRect();
+        if (r.bottom < 70 || r.top > window.innerHeight - 40) continue;   // fuori schermo: salta
+        if (r.top <= c && r.bottom >= c) return i;                        // contiene il centro
+        var d = Math.min(Math.abs(r.top - c), Math.abs(r.bottom - c));
+        if (d < bestDist){ bestDist = d; best = i; }
       }
-      return Math.max(0, paragrafi.length - 1);
+      return best >= 0 ? best : 0;
     }
 
     function togliPugnale(animato){
@@ -397,7 +525,7 @@
 
     function aggiornaBtn(){
       if (!btn) return;
-      var c = !!document.querySelector('.pugnale');
+      var c = !!salvato();   // basato sul salvataggio, non sul DOM: evita il bug durante l'animazione di uscita
       btn.classList.toggle('attivo', c);
       btn.querySelector('.etichetta-btn').textContent = c ? 'togli il segnalibro' : 'pianta il segnalibro';
     }
@@ -408,12 +536,21 @@
     btn.type = 'button';
     btn.innerHTML = '<span class="icona">' + SVG_PUGNALE + '</span><span class="etichetta-btn">pianta il segnalibro</span>';
     btn.addEventListener('click', function(){
-      if (document.querySelector('.pugnale')) {
+      if (salvato()) {
         togliPugnale(true);
         try { localStorage.removeItem('riven-pugnale'); } catch(e){}
         aggiornaBtn();
       } else {
-        pianta(idxInCima(), true);
+        pianta(idxCentro(), true);
+        // garanzia: se per qualche motivo finisce fuori vista, lo porto al centro
+        var d = document.querySelector('.pugnale');
+        if (d){
+          var t = d.getBoundingClientRect().top;
+          if (t < 90 || t > window.innerHeight - 40){
+            var seg = document.querySelector('.testo p.segnato');
+            if (seg) seg.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+        }
       }
     });
     document.body.appendChild(btn);

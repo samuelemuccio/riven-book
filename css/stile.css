@@ -85,10 +85,17 @@ html[data-tema="celestiale"] body::before{ mix-blend-mode:screen; opacity:.045; 
 body::after{
   content:"";
   position:fixed; inset:0; z-index:39; pointer-events:none;
-  background:radial-gradient(ellipse 120% 90% at 50% 40%, transparent 60%, rgba(0,0,0,.10) 100%);
+  background:
+    radial-gradient(120% 75% at 50% 0%, rgba(255,242,214,.06), transparent 42%),
+    radial-gradient(ellipse 122% 96% at 50% 42%, transparent 54%, rgba(40,26,12,.18) 100%);
   transition:opacity var(--transizione);
 }
-html[data-tema="normale"] body::after{ opacity:.5 }
+html[data-tema="normale"] body::after{ opacity:.65 }
+html[data-tema="celestiale"] body::after{
+  background:
+    radial-gradient(120% 75% at 50% 0%, rgba(150,120,210,.07), transparent 44%),
+    radial-gradient(ellipse 122% 96% at 50% 42%, transparent 48%, rgba(0,0,0,.55) 100%);
+}
 
 a{color:var(--viola); text-decoration:none; transition:color .2s}
 a:hover{color:var(--rubrica)}
@@ -342,7 +349,12 @@ html[data-tema="celestiale"] .voce.piccola{ text-shadow:0 0 8px rgba(126,99,184,
 .bestiario .rubrichetta{
   display:block; text-align:center;
   font-variant:small-caps; letter-spacing:.42em; text-indent:.42em;
-  font-size:.8rem; color:var(--rubrica); margin-bottom:.9rem;
+  font-size:.8rem; color:var(--rubrica); margin-bottom:1.1rem;
+}
+.bestiario .rubrichetta::before,
+.bestiario .rubrichetta::after{
+  content:"❦"; color:var(--oro-tenue); font-size:.92em;
+  letter-spacing:0; text-indent:0; margin:0 .7em; opacity:.7;
 }
 .bestiario .nota{
   font-family:var(--font-altramano); font-style:italic;
@@ -468,11 +480,17 @@ html[data-tema="celestiale"] .sigillo{ animation:respiro 5s ease-in-out infinite
 .indice li:first-child{ border-top:1px solid var(--linea) }
 .voce-indice{
   display:grid; grid-template-columns:4.2rem 1fr; gap:0 1.4rem;
-  align-items:baseline;
-  padding:1.15rem .4rem; color:var(--inchiostro);
-  transition:background .25s;
+  align-items:baseline; position:relative;
+  padding:1.15rem .4rem .9rem 1rem; color:var(--inchiostro);
+  transition:background .25s, padding-left .25s;
 }
-.voce-indice:hover{ background:color-mix(in srgb, var(--viola) 6%, transparent) }
+.voce-indice::before{   /* filo verticale che cresce all'hover */
+  content:""; position:absolute; left:0; top:50%; width:2px; height:0;
+  background:linear-gradient(var(--viola), var(--rubrica));
+  transform:translateY(-50%); transition:height .28s ease; opacity:.85;
+}
+.voce-indice:hover{ background:color-mix(in srgb, var(--viola) 6%, transparent); padding-left:1.4rem }
+.voce-indice:hover::before{ height:62% }
 .voce-indice .num{
   font-family:var(--font-lapide); font-weight:700; font-size:1.5rem;
   color:var(--rubrica); text-align:right;
@@ -487,12 +505,20 @@ html[data-tema="celestiale"] .sigillo{ animation:respiro 5s ease-in-out infinite
 
 /* ----------------------------- colophon */
 .colophon{
-  border-top:1px solid var(--linea);
-  text-align:center; padding:2.6rem 1.4rem 3.4rem;
-  color:var(--inchiostro-tenue); font-size:.92rem;
+  text-align:center; padding:3rem 1.4rem 3.6rem;
+  color:var(--inchiostro-tenue); font-size:.9rem; position:relative;
 }
-.colophon .fregio{ color:var(--rubrica); letter-spacing:.6em; text-indent:.6em; display:block; margin-bottom:1rem }
-.colophon p{ margin:.3em 0 }
+.colophon::before{
+  content:""; display:block; width:min(58%,22rem); height:1px; margin:0 auto 1.7rem;
+  background:linear-gradient(90deg, transparent, var(--linea-forte) 35%, var(--oro-tenue), var(--linea-forte) 65%, transparent);
+}
+.colophon .fregio{
+  color:var(--rubrica); font-size:1.15rem; letter-spacing:.5em; text-indent:.5em;
+  display:block; width:-moz-fit-content; width:fit-content; margin:-2.55rem auto 1.5rem;
+  background:var(--carta); padding:0 1.1rem; position:relative;
+}
+.colophon p{ margin:.4em 0; letter-spacing:.02em }
+.colophon p:first-of-type{ font-family:var(--font-lapide); letter-spacing:.2em; font-size:.82rem; color:var(--inchiostro) }
 
 /* il libro che si apre (home) */
 .home .copertina{ gap:0 }
@@ -656,34 +682,103 @@ html[data-tema="celestiale"] .marea{
    EFFETTI IMMERSIVI per-capitolo
    ============================================================ */
 
-/* --- Cap. III · il sigillo inciso a fuoco --- */
-.sigillo-scena{ position:relative }
-.sigillo-fuoco{
-  position:fixed; inset:0; z-index:33; pointer-events:none;
-  display:grid; place-items:center; opacity:0;
-  background:radial-gradient(closest-side, rgba(8,4,18,.74), rgba(8,4,18,.32) 45%, transparent 70%);
+/* --- "Decifra" · la mano morta, illeggibile finché non ci passi sopra (%%…%%) --- */
+.decifra{
+  font-family:'IM Fell English', var(--font-corpo);
+  color:var(--viola); cursor:help;
+  border-bottom:1px dotted var(--viola-tenue);
+  text-shadow:0 0 6px var(--bagliore);
+  transition:color .45s ease, text-shadow .45s ease;
 }
-.sigillo-fuoco svg{ width:min(66vmin, 520px); height:auto; overflow:visible }
-.sigillo-fuoco .ramo{
-  fill:none; stroke:#c9aef0; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;
-  stroke-dasharray:1; stroke-dashoffset:1;
-  filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 12px var(--viola)) drop-shadow(0 0 26px var(--viola));
+.decifra:hover, .decifra:focus{ outline:none }
+html[data-tema="celestiale"] .decifra{ text-shadow:0 0 11px var(--bagliore) }
+/* ricomposta: torna inchiostro, in corsivo come il resto della citazione */
+.decifra.risolto{
+  color:inherit; font-family:inherit; font-style:italic;
+  text-shadow:none; border-bottom-color:transparent;
 }
-.sigillo-fuoco .occhio-p{
-  fill:#e7d8ff; opacity:0;
-  transform-box:fill-box; transform-origin:center;
-  filter:drop-shadow(0 0 10px var(--viola)) drop-shadow(0 0 22px var(--viola));
+@media (prefers-reduced-motion:reduce){
+  .decifra{ color:inherit; font-family:inherit; text-shadow:none; border-bottom-color:transparent; cursor:auto }
 }
-.sigillo-scena.acceso .sigillo-fuoco{ animation:sig-vita 6.5s ease forwards }
-.sigillo-scena.acceso .ramo{ animation:sig-incidi 1.9s cubic-bezier(.5,0,.3,1) forwards .2s, sig-pulsa 2.4s ease-in-out 2.2s infinite }
-.sigillo-scena.acceso .ramo:nth-of-type(n+2){ animation-delay:.65s, 2.4s }
-.sigillo-scena.acceso .ramo:nth-of-type(n+5){ animation-delay:1.1s, 2.6s }
-.sigillo-scena.acceso .occhio-p{ animation:sig-occhio 1.5s ease forwards 1.7s }
-@keyframes sig-vita{ 0%{opacity:0} 14%{opacity:1} 60%{opacity:1} 78%{opacity:.92} 100%{opacity:0} }
-@keyframes sig-incidi{ to{ stroke-dashoffset:0 } }
-@keyframes sig-pulsa{ 0%,100%{ stroke:#b79ae6 } 50%{ stroke:#efe2ff } }
-@keyframes sig-occhio{ 0%{opacity:0; transform:scale(.4)} 55%{opacity:1; transform:scale(1.12)} 100%{opacity:.95; transform:none} }
-@media (prefers-reduced-motion:reduce){ .sigillo-fuoco{ display:none } }
+
+/* --- Note a margine · marcatore [[testo||nota]], pannello a destra --- */
+.nota{ cursor:pointer }
+.nota-rif{ border-bottom:1px dotted var(--rubrica); transition:color .2s }
+.nota:hover .nota-rif, .nota:focus .nota-rif, .nota.nota-attiva .nota-rif{ color:var(--rubrica) }
+.nota:focus-visible{ outline:2px solid var(--viola); outline-offset:2px; border-radius:2px }
+.nota-seg{
+  font-family:var(--font-lapide); font-weight:700; font-size:.62em;
+  color:var(--rubrica); vertical-align:super; line-height:0; margin-left:.1em;
+}
+.nota-corpo{ display:none }   /* solo deposito del testo della nota */
+
+.nota-pop{
+  position:fixed; z-index:100;
+  width:max-content; max-width:min(20rem, 85vw);
+  background:var(--carta-nota); color:var(--inchiostro);
+  border:1px solid var(--linea-forte);
+  border-radius:4px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15), 0 0 0 1px var(--linea);
+  padding:1rem 1.4rem;
+  font-family:var(--font-corpo); font-size:1rem; line-height:1.5;
+  opacity:0; transform:translateY(8px);
+  transition:opacity .2s ease, transform .2s ease;
+  text-align:center;
+}
+.nota-pop.aperta{ opacity:1; transform:none }
+.nota-pop-num{
+  display:block;
+  font-variant:small-caps; letter-spacing:.2em;
+  font-size:.75rem; color:var(--rubrica); margin-bottom:.4rem;
+}
+.nota-pop-num::before{ content:"" }
+.nota-pop-testo em{ font-style:italic }
+.nota-pop::before, .nota-pop::after {
+  content:""; position:absolute;
+  left:50%; margin-left:-7px;
+  border-style:solid; border-color:transparent;
+  width:0; height:0;
+}
+.nota-pop.sopra::before { border-width:8px 7px 0; border-top-color:var(--linea-forte); bottom:-8px; }
+.nota-pop.sopra::after  { border-width:7px 6px 0; border-top-color:var(--carta-nota); bottom:-6px; margin-left:-6px; }
+.nota-pop.sotto::before { border-width:0 7px 8px; border-bottom-color:var(--linea-forte); top:-8px; }
+.nota-pop.sotto::after  { border-width:0 6px 7px; border-bottom-color:var(--carta-nota); top:-6px; margin-left:-6px; }
+
+html[data-tema="celestiale"] .nota-pop{ box-shadow:0 6px 24px rgba(0,0,0,.6), 0 0 20px -5px var(--bagliore) }
+@media (max-width:760px){
+  .nota-pop{ left:50% !important; transform:translateX(-50%) translateY(8px) !important; bottom:1.1rem; top:auto !important; right:auto !important; }
+  .nota-pop.aperta{ transform:translateX(-50%) translateY(0) !important }
+  .nota-pop::before, .nota-pop::after{ display:none }
+}
+@media print{ .nota-pop{ display:none !important } .nota-corpo{ display:inline } .nota-seg{ color:#111 } }
+
+/* --- Blocco enigma (testo da decifrare isolato) --- */
+.enigma-box{
+  margin:2.5rem auto; max-width:33rem;
+  background:var(--carta-nota);
+  border:1px solid var(--linea-forte);
+  padding:2.2rem 1.7rem 1.8rem;
+  text-align:center;
+  position:relative;
+  box-shadow:var(--ombra);
+  height: 12rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.enigma-box .enigma-istruzioni{
+  position:absolute; top:-.7rem; left:50%; transform:translateX(-50%);
+  background:var(--carta); padding:0 1rem;
+  font-variant:small-caps; letter-spacing:.25em; text-indent:.25em;
+  font-size:.75rem; color:var(--rubrica);
+  border:1px solid var(--linea-forte); border-radius:2em;
+  transition:opacity .3s; opacity:.9; white-space:nowrap;
+}
+.enigma-box:hover .enigma-istruzioni{ opacity:0 }
+.enigma-box .enigma-testo{
+  font-family:var(--font-altramano); font-size:1.15em; line-height:1.6;
+}
+html[data-tema="celestiale"] .enigma-box{ box-shadow:0 1px 2px rgba(0,0,0,.5), 0 0 34px -12px var(--bagliore) }
 
 /* --- Cap. IV · inchiostro sanguinante --- */
 .inchiostro{ position:fixed; top:0; left:0; right:0; height:0; z-index:24; pointer-events:none; --ink:#241a12 }
@@ -743,7 +838,7 @@ html[data-tema="celestiale"] .inchiostro .goccia{ opacity:.5; filter:drop-shadow
 }
 @media print{
   .barra, .fiume, .passi, .forma, .discesa, .fumo, .segnalibro, .psicosi-voci, .marea,
-  .sigillo-fuoco, .inchiostro, .occhi, .strappo{ display:none !important }
+  .inchiostro, .occhi, .strappo{ display:none !important }
   .copertina-libro{ display:none !important }
   .incipit{ opacity:1 !important; transform:none !important }
   body{ background:#fff; color:#111; font-size:11.5pt }
