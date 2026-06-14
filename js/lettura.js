@@ -366,7 +366,8 @@
   }
 
   /* ---------- NOTE A MARGINE — marcatore [[testo||nota]], pannello a destra ---------- */
-  var note = document.querySelectorAll('.nota');
+  var noteTutte = document.querySelectorAll('.nota');
+  var note = Array.prototype.slice.call(noteTutte).filter(function(n) { return n.querySelector('.nota-seg'); });
   if (note.length){
     var pop = document.createElement('aside');
     pop.className = 'nota-pop'; pop.setAttribute('role', 'note'); pop.hidden = true;
